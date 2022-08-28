@@ -2,7 +2,7 @@ using System.Text;
 
 namespace MemoryView;
 
-public record struct Reference(string Name, Type DeclaredType, Node? Value)
+public record struct Field(string Name, Type DeclaredType, Node? Value)
 {
     public override string ToString()
     {
@@ -34,7 +34,7 @@ public record struct Reference(string Name, Type DeclaredType, Node? Value)
         else if (DeclaredType.IsValueType)
         {
             sb.AppendLine();
-            Value.PrintReferences(sb, indentLevel + 1);
+            Value.PrintFields(sb, indentLevel + 1);
         }
         else
         {

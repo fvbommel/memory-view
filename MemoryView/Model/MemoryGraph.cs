@@ -1,19 +1,19 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace MemoryView;
 
-public class Graph
+public class MemoryGraph
 {
-    internal List<Reference> Roots { get; } = new();
+    internal List<Field> Roots { get; } = new();
 
     private Dictionary<object, Node> NodeMap { get; } = new(new ReferenceEqualityComparer());
 
     internal IReadOnlyCollection<Node> Nodes => NodeMap.Values;
 
-    public Graph Add<T>(T root, [CallerArgumentExpression("root")] string? name = null)
+    public MemoryGraph Add<T>(T root, [CallerArgumentExpression("root")] string? name = null)
     {
         // This method is generic to preserve Nullable<T>, which disappears when boxed.
         var value = GetOrCreate(root, typeof(T));
@@ -35,13 +35,13 @@ public class Graph
             else if (root.DeclaredType.IsPrimitive)
             {
                 sb.AppendLine($"{root.Name} : {root.DeclaredType.GetDisplayName()} = {root.Value.Label}");
-                root.Value.PrintReferences(sb, 1);
+                root.Value.PrintFields(sb, 1);
             }
             else if (root.DeclaredType.IsValueType)
             {
                 // For non-primitive value types, the label is the type.
                 sb.AppendLine($"{root.Name} : {root.Value.Label}");
-                root.Value.PrintReferences(sb, 1);
+                root.Value.PrintFields(sb, 1);
             }
             else
             {
@@ -69,8 +69,8 @@ public class Graph
         {
             var element = declaredType.GetGenericArguments()[0];
             var data = new Node(element.Name + "?", declaredType);
-            data.References.Add(new(nameof(Nullable<int>.HasValue), typeof(bool), GetOrCreate(obj is not null, typeof(bool))));
-            data.References.Add(new(nameof(Nullable<int>.Value), element, GetOrCreate(obj, element)));
+            data.Fields.Add(new(nameof(Nullable<int>.HasValue), typeof(bool), GetOrCreate(obj is not null, typeof(bool))));
+            data.Fields.Add(new(nameof(Nullable<int>.Value), element, GetOrCreate(obj, element)));
             // No point caching this, it's a value type.
             return data;
         }
@@ -153,13 +153,13 @@ public class Graph
                 }
                 for (int i = 0; i < N; i++)
                 {
-                    data.References.Add(new($"[{i}]", elementType, GetOrCreate(list[i], elementType)));
+                    data.Fields.Add(new($"[{i}]", elementType, GetOrCreate(list[i], elementType)));
                 }
                 shownCount = N;
             }
             if (arr.LongLength > shownCount)
             {
-                data.References.Add(new("...", elementType, null));
+                data.Fields.Add(new("...", elementType, null));
             }
             return;
         }
@@ -174,7 +174,7 @@ public class Graph
         var fields = type.GetFields(flags);
         foreach (var field in fields)
         {
-            data.References.Add(new(field.Name, field.FieldType, GetOrCreate(field.GetValue(source), field.FieldType)));
+            data.Fields.Add(new(field.Name, field.FieldType, GetOrCreate(field.GetValue(source), field.FieldType)));
         }
     }
 }

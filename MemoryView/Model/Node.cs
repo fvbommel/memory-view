@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 
 namespace MemoryView;
 
@@ -6,15 +6,20 @@ public class Node
 {
     private static int InstanceCounter;
 
+    /// <summary> A unique ID value for this node. </summary>
     public int ID { get; }
 
+    /// <summary> Whether this is a boxed value type. </summary>
     public bool IsBoxed { get; set; }
 
+    /// <summary> The label for this node. </summary>
     public string Label { get; }
 
+    /// <summary> The type of this node. </summary>
     public Type Type { get; }
 
-    public List<Reference> References { get; } = new();
+    /// <summary> Fields contained in this node. </summary>
+    public List<Field> Fields { get; } = new();
 
     public Node(string label, Type type)
     {
@@ -45,14 +50,14 @@ public class Node
         }
 
         // Members.
-        PrintReferences(sb, 1);
+        PrintFields(sb, 1);
     }
 
-    internal void PrintReferences(StringBuilder sb, int indentLevel)
+    internal void PrintFields(StringBuilder sb, int indentLevel)
     {
-        foreach (var r in References)
+        foreach (var f in Fields)
         {
-            r.Print(sb, indentLevel);
+            f.Print(sb, indentLevel);
         }
     }
 }
