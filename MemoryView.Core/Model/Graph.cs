@@ -88,7 +88,7 @@ public class Graph
             string label;
             if (type.IsPrimitive)
             {
-                label = $"{obj} : {type.Name}";
+                label = $"{obj} : {type.GetDisplayName()}";
             }
             else if (obj is string contents)
             {
@@ -103,11 +103,11 @@ public class Graph
                 {
                     dims[i] = arr.GetLongLength(i);
                 }
-                label = $"{type.GetElementType()!.Name}[{string.Join(',', dims)}]";
+                label = $"{type.GetElementType()!.GetDisplayName()}[{string.Join(',', dims)}]";
             }
             else
             {
-                label = type.Name;
+                label = type.GetDisplayName();
             }
             result = new Node(label, type);
 
