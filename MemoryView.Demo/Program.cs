@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using MemoryView;
 
 var root = new TestClass
@@ -10,6 +11,22 @@ var graph = Inspect.CreateGraph(root);
 if (args.Contains("--dot"))
 {
     graph.WriteDot(Console.Out);
+}
+else if (args.Contains("--show"))
+{
+    using var process = new Process()
+    {
+        StartInfo = new()
+        {
+            FileName = "xdot",
+            ArgumentList = { "-" },
+            RedirectStandardInput = true,
+        },
+    };
+
+    process.Start();
+    graph.WriteDot(process.StandardInput);
+    process.StandardInput.Close();
 }
 else
 {
@@ -34,7 +51,7 @@ public class TestClass : BaseClass
 
     public Tuple<string, int?> Tuple { get; } = System.Tuple.Create("foo", (int?)5);
 
-    public (string, int) ValueTuple { get; } = ("foo", 5);
+    public (string, int) ValueTuple { get; } = ("bar", 5);
 
     public TestClass? Next { get; set; }
 
