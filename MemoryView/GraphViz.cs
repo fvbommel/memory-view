@@ -9,12 +9,16 @@ public static class GraphViz
     {
         w.WriteLine("digraph memory {");
         w.WriteLine("  rankdir=LR");
+        w.WriteLine();
         w.WriteLine("  edge [dir=both arrowtail=dot tailclip=false]");
 
         var edges = new List<string>();
 
         WriteRootNodes(w, graph.Roots, edges);
+        w.WriteLine();
+
         WriteHeapNodes(w, graph.Nodes, edges);
+        w.WriteLine();
 
         foreach (var edge in edges)
         {
@@ -26,10 +30,7 @@ public static class GraphViz
 
     private static void WriteRootNodes(TextWriter w, IEnumerable<Reference> references, List<string> edges)
     {
-        var name = "Stack";
-        w.WriteLine($"  subgraph cluster_{name} {{");
-        w.WriteLine($"    graph [label=\"{name}\"]");
-        w.WriteLine($"    roots [label=<<table cellborder=\"0\" rows=\"*\" columns=\"*\">");
+        w.WriteLine($"  roots [label=<<table cellborder=\"0\" rows=\"*\" columns=\"*\">");
         w.WriteLine($"      <tr><td colspan=\"3\"><b>Roots</b></td></tr>");
 
         int idx = 0;
@@ -39,13 +40,13 @@ public static class GraphViz
         }
 
         w.WriteLine($"    </table>> shape=none margin=0]");
-        w.WriteLine("  }");
     }
 
     private static void WriteHeapNodes(TextWriter w, IEnumerable<Node?> nodes, List<string> edges)
     {
         w.WriteLine($"  subgraph cluster_Heap {{");
         w.WriteLine($"    graph [label=\"Heap\"]");
+        w.WriteLine();
         foreach (var node in nodes)
         {
             if (node is { Type.IsValueType: false })
