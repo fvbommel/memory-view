@@ -12,11 +12,14 @@ public class Graph
 
     private Dictionary<object, Node> Cache { get; } = new(new ReferenceEqualityComparer());
 
+    private Dictionary<(object, Type), Node> NullableCache { get; } = new();
+
     internal ICollection<Node> Nodes => Cache.Values;
 
-    public Graph Add(object root, [CallerArgumentExpression("root")] string? name = null)
+    public Graph Add<T>(T root, [CallerArgumentExpression("root")] string? name = null)
     {
-        var value = GetOrCreate(root);
+        // This method is generic to preserve Nullable<T>, which disappears when boxed.
+        var value = GetOrCreate(root, typeof(T));
         Roots.Add(new(name ?? value?.Label ?? "<unnamed>", value));
         return this;
     }
@@ -33,17 +36,35 @@ public class Graph
         return sb.ToString();
     }
 
-    private Node? GetOrCreate(object? obj)
+    private Node? GetOrCreate(object? obj, Type type)
     {
+        // Handle Nullable<T>.
+        // This cannot be handled generically because of boxing weirdness:
+        // obj is not of type Nullable<T>. It is either null or a boxed T.
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+        {
+            var element = type.GetGenericArguments()[0];
+            var data = new Node(element.Name + "?", type);
+            data.References.Add(new(nameof(Nullable<int>.HasValue), GetOrCreate(obj is not null, typeof(bool))));
+            data.References.Add(new(nameof(Nullable<int>.Value), GetOrCreate(obj, element)));
+            // No point caching this, it's a value type.
+            return data;
+        }
+
+        // Any other null value: just return null.
         if (obj is null)
         {
             return null;
         }
 
+        // Check if this object has a node allocated for it already.
         if (!Cache.TryGetValue(obj, out var result))
         {
+            // From this point on we want the instance type, not the declared type.
+            // (The declared type could be a base class or interface type)
+            type = obj.GetType();
+
             // Create uninitialized object.
-            var type = obj.GetType();
             string label;
             if (type.IsPrimitive)
             {
@@ -101,7 +122,7 @@ public class Graph
                 }
                 for (int i = 0; i < N; i++)
                 {
-                    data.References.Add(new($"[{i}]", GetOrCreate(list[i])));
+                    data.References.Add(new($"[{i}]", GetOrCreate(list[i], type.GetElementType()!)));
                 }
                 shownCount = N;
             }
@@ -122,7 +143,7 @@ public class Graph
         var fields = type.GetFields(flags);
         foreach (var field in fields)
         {
-            data.References.Add(new(field.Name, GetOrCreate(field.GetValue(source))));
+            data.References.Add(new(field.Name, GetOrCreate(field.GetValue(source), field.FieldType)));
         }
     }
 }

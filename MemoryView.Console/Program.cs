@@ -1,4 +1,3 @@
-using System;
 using MemoryView.Core;
 
 var root = new TestClass
@@ -6,7 +5,7 @@ var root = new TestClass
     Next = new TestClass(),
 };
 
-var graph = Inspect.CreateGraph(root, ("hunter2", 5), (object)"foo");
+var graph = Inspect.CreateGraph(root);
 
 if (args.Contains("--dot"))
 {
@@ -33,7 +32,7 @@ public class TestClass : BaseClass
 {
     private string _privateString = "hunter2";
 
-    public Tuple<string, int> Tuple { get; } = System.Tuple.Create("foo", 5);
+    public Tuple<string, int?> Tuple { get; } = System.Tuple.Create("foo", (int?)5);
 
     public (string, int) ValueTuple { get; } = ("foo", 5);
 
