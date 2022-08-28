@@ -9,7 +9,7 @@ internal static class TypeExtensions
     public static string GetDisplayName(this Type type)
     {
         // Is it a complicated type?
-        if (type.IsGenericType || type.DeclaringType is not null)
+        if (type.IsGenericType || type.DeclaringType is not null || type.GetElementType() is not null)
         {
             var sb = new StringBuilder();
             PrintDisplayName(sb, type);
