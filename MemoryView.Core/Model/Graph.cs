@@ -9,17 +9,15 @@ public class Graph
 {
     internal List<Reference> Roots { get; } = new();
 
-    private Dictionary<object, Node> Cache { get; } = new(new ReferenceEqualityComparer());
+    private Dictionary<object, Node> NodeMap { get; } = new(new ReferenceEqualityComparer());
 
-    private Dictionary<(object, Type), Node> NullableCache { get; } = new();
-
-    internal ICollection<Node> Nodes => Cache.Values;
+    internal IReadOnlyCollection<Node> Nodes => NodeMap.Values;
 
     public Graph Add<T>(T root, [CallerArgumentExpression("root")] string? name = null)
     {
         // This method is generic to preserve Nullable<T>, which disappears when boxed.
         var value = GetOrCreate(root, typeof(T));
-        Roots.Add(new(name ?? value?.Label ?? "<unnamed>", value));
+        Roots.Add(new(name ?? value?.Label ?? "<unnamed>", typeof(T), value));
         return this;
     }
 
@@ -34,39 +32,45 @@ public class Graph
             {
                 sb.AppendLine($"{root.Name} = <null>");
             }
-            else if (root.Value.Type.IsValueType)
+            else if (root.DeclaredType.IsPrimitive)
             {
-                sb.AppendLine($"{root.Name} = {root.Value.Label}");
-                root.Value.PrintTo(sb, 1);
+                sb.AppendLine($"{root.Name} : {root.DeclaredType.GetDisplayName()} = {root.Value.Label}");
+                root.Value.PrintReferences(sb, 1);
+            }
+            else if (root.DeclaredType.IsValueType)
+            {
+                // For non-primitive value types, the label is the type.
+                sb.AppendLine($"{root.Name} : {root.Value.Label}");
+                root.Value.PrintReferences(sb, 1);
             }
             else
             {
-                sb.AppendLine($"{root.Name} => #{root.Value.ID}");
+                sb.AppendLine($"{root.Name} : {root.DeclaredType.GetDisplayName()} => #{root.Value.ID}");
             }
         }
 
         sb.AppendLine();
 
         sb.AppendLine("[Heap]");
-        foreach (var record in Cache.Values.Where(o => !o.Type.IsValueType).OrderBy(o => o.ID))
+        foreach (var record in Nodes.Where(o => o.IsBoxed || !o.Type.IsValueType).OrderBy(o => o.ID))
         {
-            sb.AppendLine(record.ToString());
+            record.Print(sb);
         }
 
-        return sb.ToString();
+        return sb.TrimRight().ToString();
     }
 
-    private Node? GetOrCreate(object? obj, Type type)
+    private Node? GetOrCreate(object? obj, Type declaredType)
     {
         // Handle Nullable<T>.
         // This cannot be handled generically because of boxing weirdness:
         // obj is not of type Nullable<T>. It is either null or a boxed T.
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+        if (declaredType.IsGenericType && declaredType.GetGenericTypeDefinition() == typeof(Nullable<>))
         {
-            var element = type.GetGenericArguments()[0];
-            var data = new Node(element.Name + "?", type);
-            data.References.Add(new(nameof(Nullable<int>.HasValue), GetOrCreate(obj is not null, typeof(bool))));
-            data.References.Add(new(nameof(Nullable<int>.Value), GetOrCreate(obj, element)));
+            var element = declaredType.GetGenericArguments()[0];
+            var data = new Node(element.Name + "?", declaredType);
+            data.References.Add(new(nameof(Nullable<int>.HasValue), typeof(bool), GetOrCreate(obj is not null, typeof(bool))));
+            data.References.Add(new(nameof(Nullable<int>.Value), element, GetOrCreate(obj, element)));
             // No point caching this, it's a value type.
             return data;
         }
@@ -78,17 +82,17 @@ public class Graph
         }
 
         // Check if this object has a node allocated for it already.
-        if (!Cache.TryGetValue(obj, out var result))
+        if (!NodeMap.TryGetValue(obj, out var result))
         {
             // From this point on we want the instance type, not the declared type.
             // (The declared type could be a base class or interface type)
-            type = obj.GetType();
+            var type = obj.GetType();
 
             // Create uninitialized object.
             string label;
             if (type.IsPrimitive)
             {
-                label = $"{obj} : {type.GetDisplayName()}";
+                label = obj.ToString() ?? string.Empty;
             }
             else if (obj is string contents)
             {
@@ -112,14 +116,20 @@ public class Graph
             result = new Node(label, type);
 
             // Ensure future lookups (including recursive ones in AddFields) will find this object.
-            Cache[obj] = result;
+            NodeMap[obj] = result;
 
-            if (!type.IsPrimitive)
+            if (!type.IsPrimitive && type != typeof(string))
             {
                 // Fill in details.
                 AddFields(result, type, obj);
             }
         }
+
+        if (result.Type.IsValueType && !declaredType.IsValueType)
+        {
+            result.IsBoxed = true;
+        }
+
         return result;
     }
 
@@ -128,6 +138,7 @@ public class Graph
         if (type.IsArray)
         {
             var arr = (Array)source;
+            var elementType = type.GetElementType()!;
             long shownCount = 0;
             if (arr.Rank == 1)
             {
@@ -142,13 +153,13 @@ public class Graph
                 }
                 for (int i = 0; i < N; i++)
                 {
-                    data.References.Add(new($"[{i}]", GetOrCreate(list[i], type.GetElementType()!)));
+                    data.References.Add(new($"[{i}]", elementType, GetOrCreate(list[i], elementType)));
                 }
                 shownCount = N;
             }
             if (arr.LongLength > shownCount)
             {
-                data.References.Add(new("...", null));
+                data.References.Add(new("...", elementType, null));
             }
             return;
         }
@@ -163,7 +174,7 @@ public class Graph
         var fields = type.GetFields(flags);
         foreach (var field in fields)
         {
-            data.References.Add(new(field.Name, GetOrCreate(field.GetValue(source), field.FieldType)));
+            data.References.Add(new(field.Name, field.FieldType, GetOrCreate(field.GetValue(source), field.FieldType)));
         }
     }
 }

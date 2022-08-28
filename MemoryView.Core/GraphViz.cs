@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text;
-using MemoryView.Core;
 
 namespace MemoryView.Core;
 
@@ -31,7 +30,7 @@ public static class GraphViz
         w.WriteLine($"  subgraph cluster_{name} {{");
         w.WriteLine($"    graph [label=\"{name}\"]");
         w.WriteLine($"    roots [label=<<table cellborder=\"0\" rows=\"*\" columns=\"*\">");
-        w.WriteLine($"      <tr><td colspan=\"2\"><b>Roots</b></td></tr>");
+        w.WriteLine($"      <tr><td colspan=\"3\"><b>Roots</b></td></tr>");
 
         int idx = 0;
         foreach (var r in references)
@@ -61,6 +60,25 @@ public static class GraphViz
                     w.WriteLine($"      {GetNodeLabel(node, edges, (node.ID.ToString(), ""))}> shape=none margin=0]");
                 }
             }
+            else if (node is { IsBoxed: true })
+            {
+                w.WriteLine($"    {node.ID} [label=<");
+                w.WriteLine("      <table cellborder=\"0\" rows=\"*\" columns=\"*\">");
+                if (node.Type.IsPrimitive)
+                {
+                    w.WriteLine($"        <tr><td><b>Box</b></td><td><b>{HtmlEsc(node.Type.GetDisplayName())}</b></td><td>{HtmlEsc(node.Label)}</td></tr>");
+                }
+                else
+                {
+                    w.WriteLine($"        <tr><td><b>Box</b></td><td colspan=\"2\"><b>{HtmlEsc(node.Label)}</b></td></tr>");
+                }
+                foreach (var r in node.References)
+                {
+                    w.WriteLine("        " + GetRefLabel(r, edges, (node.ID.ToString(), "")));
+                }
+
+                w.WriteLine("      </table>> shape=none margin=0]");
+            }
         }
         w.WriteLine("  }");
     }
@@ -70,7 +88,7 @@ public static class GraphViz
         var sb = new StringBuilder();
 
         sb.AppendLine("<table cellborder=\"0\" rows=\"*\" columns=\"*\">");
-        sb.AppendLine($"        <tr><td colspan=\"2\"><b>{HtmlEsc(node.Label)}</b></td></tr>");
+        sb.AppendLine($"        <tr><td colspan=\"3\"><b>{HtmlEsc(node.Label)}</b></td></tr>");
 
         foreach (var r in node.References)
         {
@@ -91,26 +109,27 @@ public static class GraphViz
             if (r.Name == "...")
             {
                 // Trailing array elements.
-                return $"<tr><td colspan=\"2\">...</td></tr>";
+                return $"<tr><td colspan=\"3\">...</td></tr>";
             }
-            return $"<tr><td>{name}</td><td>&lt;null&gt;</td></tr>";
+            return $"<tr><td>{name}</td><td>{HtmlEsc(r.DeclaredType.GetDisplayName())}</td><td><i>null</i></td></tr>";
         }
-        else if (v.Type.IsPrimitive)
+        else if (r.DeclaredType.IsPrimitive)
         {
-            return $"<tr><td>{name}</td><td>{HtmlEsc(v.Label)}</td></tr>";
+            return $"<tr><td>{name}</td><td>{r.DeclaredType.GetDisplayName()}</td><td>{v.Label}</td></tr>";
         }
-        else if (v.Type.IsValueType)
+        else if (r.DeclaredType.IsValueType)
         {
             var subPrefix = (prefix.node, prefix.field + r.Name + "|");
-            return $"<tr><td>{name}</td><td>{GetNodeLabel(v, edges, subPrefix)}</td></tr>";
+            return $"<tr><td>{name}</td><td colspan=\"2\">{GetNodeLabel(v, edges, subPrefix)}</td></tr>";
         }
         else
         {
+            var type = HtmlEsc(r.DeclaredType.GetDisplayName());
             var port = HtmlEsc(prefix.field) + name;
 
             edges.Add($"{prefix.node}:{StringEsc(prefix.field + r.Name)}:c -> {v.ID}");
 
-            return $"<tr><td>{name}</td><td port=\"{port}\">&nbsp;&nbsp;</td></tr>";
+            return $"<tr><td>{name}</td><td>{type}</td><td port=\"{port}\">&nbsp;&nbsp;</td></tr>";
         }
     }
 

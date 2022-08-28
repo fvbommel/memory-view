@@ -8,6 +8,8 @@ public class Node
 
     public int ID { get; }
 
+    public bool IsBoxed { get; set; }
+
     public string Label { get; }
 
     public Type Type { get; }
@@ -25,45 +27,32 @@ public class Node
     {
         var sb = new StringBuilder();
 
-        sb.AppendLine($"#{ID}: {Label}");
+        Print(sb);
 
-        // No need to print members of strings.
-        if (Type != typeof(string))
-        {
-            PrintTo(sb, 1);
-        }
-
-        return sb.ToString().Trim();
+        return sb.TrimRight().ToString();
     }
 
-    internal void PrintTo(StringBuilder sb, int indentLevel)
+    internal void Print(StringBuilder sb)
+    {
+        // Header.
+        if (Type.IsPrimitive)
+        {
+            sb.AppendLine($"#{ID}: {Type.GetDisplayName()} = {Label}");
+        }
+        else
+        {
+            sb.AppendLine($"#{ID}: {Label}");
+        }
+
+        // Members.
+        PrintReferences(sb, 1);
+    }
+
+    internal void PrintReferences(StringBuilder sb, int indentLevel)
     {
         foreach (var r in References)
         {
-            // Ensure indentation.
-            for (int i = 0; i < indentLevel; i++)
-            {
-                sb.Append("    ");
-            }
-
-            var v = r.Value;
-            if (v is null)
-            {
-                sb.AppendLine($"{r.Name} = <null>");
-            }
-            else if (v.Type.IsPrimitive)
-            {
-                sb.AppendLine($"{r.Name} = {v.Label}");
-            }
-            else if (v.Type.IsValueType)
-            {
-                sb.AppendLine($"{r.Name} = {v.Label}");
-                v.PrintTo(sb, indentLevel + 1);
-            }
-            else
-            {
-                sb.AppendLine($"{r.Name} => #{v.ID}");
-            }
+            r.Print(sb, indentLevel);
         }
     }
 }
