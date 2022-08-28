@@ -23,7 +23,7 @@ public class Graph
     {
         var sb = new StringBuilder();
 
-        foreach (var record in Cache.Values.Where(o => !o.IsPrimitive).OrderBy(o => o.ID))
+        foreach (var record in Cache.Values.Where(o => !o.Type.IsPrimitive).OrderBy(o => o.ID))
         {
             sb.AppendLine(record.ToString());
         }
@@ -43,27 +43,20 @@ public class Graph
             // Create uninitialized object.
             var type = obj.GetType();
             string label;
-            bool isPrimitive = false;
             if (type.IsPrimitive)
             {
                 label = $"{obj} : {type.Name}";
-                isPrimitive = true;
             }
             else if (obj is string contents)
             {
                 var escaped = contents.Replace("\"", @"\""");
                 label = $"\"{escaped}\" : {type.Name}";
-                // isPrimitive = true; // Consider string to be a semi-primitive type.
             }
             else
             {
                 label = type.Name;
             }
-            result = new Node(label)
-            {
-                IsPrimitive = isPrimitive,
-                IsValueType = type.IsValueType,
-            };
+            result = new Node(label, type);
 
             // Ensure future lookups (including recursive ones in AddFields) will find this object.
             Cache[obj] = result;

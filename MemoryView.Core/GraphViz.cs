@@ -49,7 +49,7 @@ public static class GraphViz
         w.WriteLine($"    graph [label=\"Heap\"]");
         foreach (var node in nodes)
         {
-            if (node is { IsValueType: false })
+            if (node is { Type.IsValueType: false })
             {
                 w.WriteLine($"    {node.ID} [label=<{GetNodeLabel(node, edges, (node.ID.ToString(), ""))}> shape = none margin = 0]");
             }
@@ -82,11 +82,11 @@ public static class GraphViz
         {
             return $"<tr><td>{name}</td><td>&lt;null&gt;</td></tr>";
         }
-        else if (v.IsPrimitive)
+        else if (v.Type.IsPrimitive)
         {
             return $"<tr><td>{name}</td><td>{HtmlEsc(v.Label)}</td></tr>";
         }
-        else if (v.IsValueType)
+        else if (v.Type.IsValueType)
         {
             var subPrefix = (prefix.node, prefix.field + r.Name + "|");
             return $"<tr><td>{name}</td><td>{GetNodeLabel(v, edges, subPrefix)}</td></tr>";

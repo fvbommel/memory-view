@@ -8,18 +8,17 @@ public class Node
 
     public int ID { get; }
 
-    public bool IsPrimitive { get; init; }
-
-    public bool IsValueType { get; init; }
-
     public string Label { get; }
+
+    public Type Type { get; }
 
     public List<Reference> References { get; } = new();
 
-    public Node(string label)
+    public Node(string label, Type type)
     {
         ID = Interlocked.Increment(ref InstanceCounter);
         Label = label;
+        Type = type;
     }
 
     public override string ToString()
@@ -35,7 +34,7 @@ public class Node
             {
                 sb.AppendLine($"  {r.Name} = <null>");
             }
-            else if (v.IsPrimitive)
+            else if (v.Type.IsPrimitive)
             {
                 sb.AppendLine($"  {r.Name} = {v.Label}");
             }
