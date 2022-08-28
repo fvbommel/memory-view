@@ -1,3 +1,5 @@
+﻿using System;
+using System.Collections;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -52,6 +54,16 @@ public class Graph
                 var escaped = contents.Replace("\\", "\\\\").Replace("\"", @"\""");
                 label = $"\"{escaped}\"";
             }
+            else if (type.IsArray)
+            {
+                var arr = (Array)obj;
+                var dims = new long[arr.Rank];
+                for (int i = 0; i < arr.Rank; i++)
+                {
+                    dims[i] = arr.GetLongLength(i);
+                }
+                label = $"{type.GetElementType()!.Name}[{string.Join(',', dims)}]";
+            }
             else
             {
                 label = type.Name;
@@ -72,6 +84,34 @@ public class Graph
 
     private void AddFields(Node data, Type type, object source)
     {
+        if (type.IsArray)
+        {
+            var arr = (Array)source;
+            long shownCount = 0;
+            if (arr.Rank == 1)
+            {
+                var list = (IList)source;
+                const int MAX_LEN = 3;
+                var N = Math.Min(arr.LongLength, MAX_LEN);
+                if (arr.LongLength == MAX_LEN + 1)
+                {
+                    // If we can get rid of the "..." by displaying the
+                    // final element, do so.
+                    N++;
+                }
+                for (int i = 0; i < N; i++)
+                {
+                    data.References.Add(new($"[{i}]", GetOrCreate(list[i])));
+                }
+                shownCount = N;
+            }
+            if (arr.LongLength > shownCount)
+            {
+                data.References.Add(new("...", null));
+            }
+            return;
+        }
+
         // Add base fields first.
         if (type.BaseType is not null)
         {

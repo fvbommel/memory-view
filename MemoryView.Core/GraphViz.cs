@@ -86,6 +86,11 @@ public static class GraphViz
         var v = r.Value;
         if (v is null)
         {
+            if (r.Name == "...")
+            {
+                // Trailing array elements.
+                return $"<tr><td colspan=\"2\">...</td></tr>";
+            }
             return $"<tr><td>{name}</td><td>&lt;null&gt;</td></tr>";
         }
         else if (v.Type.IsPrimitive)
