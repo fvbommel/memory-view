@@ -32,6 +32,7 @@ public static class GraphViz
         w.WriteLine($"  subgraph cluster_{name} {{");
         w.WriteLine($"    graph [label=\"{name}\"]");
         w.WriteLine($"    roots [label=<<table>");
+        w.WriteLine($"      <tr><td colspan=\"2\"><b>Roots</b></td>]</tr>");
 
         foreach (var r in references)
         {
@@ -61,7 +62,7 @@ public static class GraphViz
         var sb = new StringBuilder();
 
         sb.AppendLine("      <table>");
-        sb.AppendLine($"        <tr><td>{HtmlEsc(node.Label)}</td><td>ID: #{node.ID}</td></tr>");
+        sb.AppendLine($"        <tr><td colspan=\"2\"><b>{HtmlEsc(node.Label)}</b></td>]</tr>");
 
         foreach (var r in node.References)
         {
