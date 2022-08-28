@@ -13,18 +13,20 @@ public static class GraphViz
         w.WriteLine("  node [shape=record style=rounded]");
         w.WriteLine("  edge [dir=both arrowtail=dot tailclip=false]");
 
-        IEnumerable<Node?> nodes = graph.Nodes;
-        var roots = graph.Roots;
-        WriteRootNodes(w, roots);
-        WriteHeapNodes(w, nodes);
+        var edges = new List<string>();
 
-        WriteRootEdges(w, roots);
-        WriteHeapEdges(w, nodes);
+        WriteRootNodes(w, graph.Roots, edges);
+        WriteHeapNodes(w, graph.Nodes, edges);
+
+        foreach (var edge in edges)
+        {
+            w.WriteLine($"  {edge}");
+        }
 
         w.WriteLine("}");
     }
 
-    private static void WriteRootNodes(TextWriter w, IEnumerable<Reference> references)
+    private static void WriteRootNodes(TextWriter w, IEnumerable<Reference> references, List<string> edges)
     {
         var name = "Stack";
         w.WriteLine($"  subgraph cluster_{name} {{");
@@ -34,7 +36,14 @@ public static class GraphViz
         int i = 1;
         foreach (var r in references)
         {
-            w.WriteLine($"    {GetRefLabel(r, i.ToString())}");
+            w.WriteLine($"      {GetRefLabel(r, i.ToString())}");
+
+            var node = r.Value;
+            if (node is not null)
+            {
+                edges.Add($"roots:{i}:c -> {node.ID}");
+            }
+
             i++;
         }
 
@@ -42,21 +51,7 @@ public static class GraphViz
         w.WriteLine("  }");
     }
 
-    private static void WriteRootEdges(TextWriter w, IEnumerable<Reference> references)
-    {
-        int i = 1;
-        foreach (var r in references)
-        {
-            var node = r.Value;
-            if (node is not null)
-            {
-                w.WriteLine($"  roots:{i}:c -> {node.ID}");
-            }
-            i++;
-        }
-    }
-
-    private static void WriteHeapNodes(TextWriter w, IEnumerable<Node?> nodes)
+    private static void WriteHeapNodes(TextWriter w, IEnumerable<Node?> nodes, List<string> edges)
     {
         w.WriteLine($"  subgraph cluster_Heap {{");
         w.WriteLine($"    graph [label=\"Heap\"]");
@@ -65,26 +60,17 @@ public static class GraphViz
             if (node is { IsPrimitive: false })
             {
                 w.WriteLine($"    {node.ID} [label={GetNodeLabel(node)} shape=none margin=0]");
-            }
-        }
-        w.WriteLine("  }");
-    }
 
-    private static void WriteHeapEdges(TextWriter w, IEnumerable<Node?> nodes)
-    {
-        foreach (var node in nodes)
-        {
-            if (node is not null && !node.IsPrimitive)
-            {
                 foreach (var r in node.References)
                 {
                     if (r.Value is { IsPrimitive: false })
                     {
-                        w.WriteLine($"  {node.ID}:<{r.Name}>:c -> {r.Value.ID}");
+                        edges.Add($"{node.ID}:<{r.Name}>:c -> {r.Value.ID}");
                     }
                 }
             }
         }
+        w.WriteLine("  }");
     }
 
     private static string GetNodeLabel(Node node)
@@ -92,15 +78,15 @@ public static class GraphViz
         var sb = new StringBuilder();
 
         sb.AppendLine("<");
-        sb.AppendLine("    <table>");
-        sb.AppendLine($"      <tr><td>{HtmlEsc(node.Label)}</td><td>ID: #{node.ID}</td></tr>");
+        sb.AppendLine("      <table>");
+        sb.AppendLine($"        <tr><td>{HtmlEsc(node.Label)}</td><td>ID: #{node.ID}</td></tr>");
 
         foreach (var r in node.References)
         {
-            sb.AppendLine("      " + GetRefLabel(r));
+            sb.AppendLine("        " + GetRefLabel(r));
         }
 
-        sb.Append("    </table>>");
+        sb.Append("      </table>>");
 
         return sb.ToString();
     }
