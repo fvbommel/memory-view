@@ -33,18 +33,9 @@ public static class GraphViz
         w.WriteLine($"    graph [label=\"{name}\"]");
         w.WriteLine($"    roots [label=<<table>");
 
-        int i = 1;
         foreach (var r in references)
         {
-            w.WriteLine($"      {GetRefLabel(r, i.ToString())}");
-
-            var node = r.Value;
-            if (node is not null)
-            {
-                edges.Add($"roots:{i}:c -> {node.ID}");
-            }
-
-            i++;
+            w.WriteLine($"      {GetRefLabel(r, edges, ("roots", ""))}");
         }
 
         w.WriteLine($"    </table>> shape=none margin=0]");
@@ -57,41 +48,32 @@ public static class GraphViz
         w.WriteLine($"    graph [label=\"Heap\"]");
         foreach (var node in nodes)
         {
-            if (node is { IsPrimitive: false })
+            if (node is { IsValueType: false })
             {
-                w.WriteLine($"    {node.ID} [label={GetNodeLabel(node)} shape=none margin=0]");
-
-                foreach (var r in node.References)
-                {
-                    if (r.Value is { IsPrimitive: false })
-                    {
-                        edges.Add($"{node.ID}:<{r.Name}>:c -> {r.Value.ID}");
-                    }
-                }
+                w.WriteLine($"    {node.ID} [label=<{GetNodeLabel(node, edges, (node.ID.ToString(), ""))}> shape = none margin = 0]");
             }
         }
         w.WriteLine("  }");
     }
 
-    private static string GetNodeLabel(Node node)
+    private static string GetNodeLabel(Node node, List<string> edges, (string node, string field) prefix)
     {
         var sb = new StringBuilder();
 
-        sb.AppendLine("<");
         sb.AppendLine("      <table>");
         sb.AppendLine($"        <tr><td>{HtmlEsc(node.Label)}</td><td>ID: #{node.ID}</td></tr>");
 
         foreach (var r in node.References)
         {
-            sb.AppendLine("        " + GetRefLabel(r));
+            sb.AppendLine("        " + GetRefLabel(r, edges, prefix));
         }
 
-        sb.Append("      </table>>");
+        sb.Append("      </table>");
 
         return sb.ToString();
     }
 
-    private static string GetRefLabel(Reference r, string? port = null)
+    private static string GetRefLabel(Reference r, List<string> edges, (string node, string field) prefix)
     {
         var name = HtmlEsc(r.Name);
         var v = r.Value;
@@ -103,11 +85,23 @@ public static class GraphViz
         {
             return $"<tr><td>{name}</td><td>{HtmlEsc(v.Label)}</td></tr>";
         }
+        else if (v.IsValueType)
+        {
+            var subPrefix = (prefix.node, prefix.field + r.Name + "|");
+            return $"<tr><td>{name}</td><td>{GetNodeLabel(v, edges, subPrefix)}</td></tr>";
+        }
         else
         {
-            return $"<tr><td>{name}</td><td port=\"{port ?? name}\">&nbsp;&nbsp;</td></tr>";
+            var port = HtmlEsc(prefix.field) + name;
+
+            edges.Add($"{prefix.node}:{StringEsc(prefix.field + r.Name)}:c -> {v.ID}");
+
+            return $"<tr><td>{name}</td><td port=\"{port}\">&nbsp;&nbsp;</td></tr>";
         }
     }
 
     private static string HtmlEsc(string s) => WebUtility.HtmlEncode(s);
+
+    private static string StringEsc(string s)
+        => '"' + s.Replace("\\", "\\\\").Replace("\"", "\\\"") + '"';
 }

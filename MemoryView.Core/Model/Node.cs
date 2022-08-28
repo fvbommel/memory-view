@@ -10,6 +10,8 @@ public class Node
 
     public bool IsPrimitive { get; init; }
 
+    public bool IsValueType { get; init; }
+
     public string Label { get; }
 
     public List<Reference> References { get; } = new();

@@ -59,7 +59,11 @@ public class Graph
             {
                 label = type.Name;
             }
-            result = new Node(label) { IsPrimitive = isPrimitive };
+            result = new Node(label)
+            {
+                IsPrimitive = isPrimitive,
+                IsValueType = type.IsValueType,
+            };
 
             // Ensure future lookups (including recursive ones in AddFields) will find this object.
             Cache[obj] = result;
