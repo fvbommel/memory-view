@@ -79,8 +79,13 @@ public class Graph
 
     private void AddFields(Node data, Type type, object source)
     {
-        // TODO: Specify BindingFlags.DeclaredOnly, manually ascend type hierarchy. (Private base class fields are currently ignored)
-        var flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        // Add base fields first.
+        if (type.BaseType is not null)
+        {
+            AddFields(data, type.BaseType, source);
+        }
+
+        var flags = BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic;
         var fields = type.GetFields(flags);
         foreach (var field in fields)
         {

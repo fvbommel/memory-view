@@ -17,7 +17,19 @@ else
     Console.WriteLine(graph);
 }
 
-public class TestClass
+public class BaseClass
+{
+    private int _privateBaseInt = -1;
+
+    public readonly int BaseField = 123;
+
+    public override string ToString()
+    {
+        return _privateBaseInt.ToString();
+    }
+}
+
+public class TestClass : BaseClass
 {
     private string _privateString = "hunter2";
 
