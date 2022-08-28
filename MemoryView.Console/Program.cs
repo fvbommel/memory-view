@@ -1,4 +1,4 @@
-using MemoryView.Core;
+using MemoryView;
 
 var root = new TestClass
 {

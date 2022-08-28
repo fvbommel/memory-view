@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 
-namespace MemoryView.Core;
+namespace MemoryView;
 
 public static class GraphViz
 {

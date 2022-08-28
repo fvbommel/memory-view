@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace MemoryView.Core;
+namespace MemoryView;
 
 /// <summary> An equality comparer that compares by reference. </summary>
 internal class ReferenceEqualityComparer : IEqualityComparer<object>

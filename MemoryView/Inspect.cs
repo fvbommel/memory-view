@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace MemoryView.Core;
+namespace MemoryView;
 
 public static class Inspect
 {

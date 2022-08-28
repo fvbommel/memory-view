@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace MemoryView.Core;
+namespace MemoryView;
 
 internal static class TypeExtensions
 {

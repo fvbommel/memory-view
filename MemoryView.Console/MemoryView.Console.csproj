@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MemoryView.Core\MemoryView.Core.csproj" />
+    <ProjectReference Include="..\MemoryView\MemoryView.csproj" />
   </ItemGroup>
 
 </Project>

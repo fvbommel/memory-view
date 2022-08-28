@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace MemoryView.Core;
+namespace MemoryView;
 
 public record struct Reference(string Name, Type DeclaredType, Node? Value)
 {

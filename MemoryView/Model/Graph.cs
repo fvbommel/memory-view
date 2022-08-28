@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace MemoryView.Core;
+namespace MemoryView;
 
 public class Graph
 {
