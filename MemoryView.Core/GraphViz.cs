@@ -90,9 +90,12 @@ public static class GraphViz
         sb.AppendLine("<table cellborder=\"0\" rows=\"*\" columns=\"*\">");
         sb.AppendLine($"        <tr><td colspan=\"3\"><b>{HtmlEsc(node.Label)}</b></td></tr>");
 
+        int idx = 0;
         foreach (var r in node.References)
         {
-            sb.AppendLine("        " + GetRefLabel(r, edges, prefix));
+            // We update the prefix here because base classes may declare identically-named fields.
+            sb.AppendLine("        " + GetRefLabel(r, edges, (prefix.node, prefix.field + idx + "|")));
+            idx++;
         }
 
         sb.Append("      </table>");

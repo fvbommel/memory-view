@@ -18,13 +18,13 @@ else
 
 public class BaseClass
 {
-    private int _privateBaseInt = -1;
+    private string _privateString = "password123";
 
     public readonly int BaseField = 123;
 
     public override string ToString()
     {
-        return _privateBaseInt.ToString();
+        return _privateString;
     }
 }
 
