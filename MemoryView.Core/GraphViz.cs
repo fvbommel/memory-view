@@ -10,7 +10,6 @@ public static class GraphViz
     {
         w.WriteLine("digraph memory {");
         w.WriteLine("  rankdir=LR");
-        w.WriteLine("  node [shape=record style=rounded]");
         w.WriteLine("  edge [dir=both arrowtail=dot tailclip=false]");
 
         var edges = new List<string>();
@@ -51,7 +50,14 @@ public static class GraphViz
         {
             if (node is { Type.IsValueType: false })
             {
-                w.WriteLine($"    {node.ID} [label=<{GetNodeLabel(node, edges, (node.ID.ToString(), ""))}> shape = none margin = 0]");
+                if (node.Type == typeof(string))
+                {
+                    w.WriteLine($"    {node.ID} [label={StringEsc(node.Label)} shape=rect style=rounded]");
+                }
+                else
+                {
+                    w.WriteLine($"    {node.ID} [label=<{GetNodeLabel(node, edges, (node.ID.ToString(), ""))}> shape=none margin=0]");
+                }
             }
         }
         w.WriteLine("  }");

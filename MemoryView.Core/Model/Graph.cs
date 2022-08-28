@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -49,8 +49,8 @@ public class Graph
             }
             else if (obj is string contents)
             {
-                var escaped = contents.Replace("\"", @"\""");
-                label = $"\"{escaped}\" : {type.Name}";
+                var escaped = contents.Replace("\\", "\\\\").Replace("\"", @"\""");
+                label = $"\"{escaped}\"";
             }
             else
             {
