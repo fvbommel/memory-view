@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -28,7 +27,28 @@ public class Graph
     {
         var sb = new StringBuilder();
 
-        foreach (var record in Cache.Values.Where(o => !o.Type.IsPrimitive).OrderBy(o => o.ID))
+        sb.AppendLine("[Roots]");
+        foreach (var root in Roots)
+        {
+            if (root.Value is null)
+            {
+                sb.AppendLine($"{root.Name} = <null>");
+            }
+            else if (root.Value.Type.IsValueType)
+            {
+                sb.AppendLine($"{root.Name} = {root.Value.Label}");
+                root.Value.PrintTo(sb, 1);
+            }
+            else
+            {
+                sb.AppendLine($"{root.Name} => #{root.Value.ID}");
+            }
+        }
+
+        sb.AppendLine();
+
+        sb.AppendLine("[Heap]");
+        foreach (var record in Cache.Values.Where(o => !o.Type.IsValueType).OrderBy(o => o.ID))
         {
             sb.AppendLine(record.ToString());
         }

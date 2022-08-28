@@ -27,23 +27,43 @@ public class Node
 
         sb.AppendLine($"#{ID}: {Label}");
 
-        foreach (var r in References)
+        // No need to print members of strings.
+        if (Type != typeof(string))
         {
-            var v = r.Value;
-            if (v is null)
-            {
-                sb.AppendLine($"  {r.Name} = <null>");
-            }
-            else if (v.Type.IsPrimitive)
-            {
-                sb.AppendLine($"  {r.Name} = {v.Label}");
-            }
-            else
-            {
-                sb.AppendLine($"  {r.Name} => #{v.ID}");
-            }
+            PrintTo(sb, 1);
         }
 
         return sb.ToString().Trim();
+    }
+
+    internal void PrintTo(StringBuilder sb, int indentLevel)
+    {
+        foreach (var r in References)
+        {
+            // Ensure indentation.
+            for (int i = 0; i < indentLevel; i++)
+            {
+                sb.Append("    ");
+            }
+
+            var v = r.Value;
+            if (v is null)
+            {
+                sb.AppendLine($"{r.Name} = <null>");
+            }
+            else if (v.Type.IsPrimitive)
+            {
+                sb.AppendLine($"{r.Name} = {v.Label}");
+            }
+            else if (v.Type.IsValueType)
+            {
+                sb.AppendLine($"{r.Name} = {v.Label}");
+                v.PrintTo(sb, indentLevel + 1);
+            }
+            else
+            {
+                sb.AppendLine($"{r.Name} => #{v.ID}");
+            }
+        }
     }
 }
