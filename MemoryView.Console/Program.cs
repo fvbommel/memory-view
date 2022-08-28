@@ -6,7 +6,7 @@ var root = new TestClass
     Next = new TestClass(),
 };
 
-var graph = Inspect.CreateGraph(root);
+var graph = Inspect.CreateGraph(root, ("hunter2", 5), (object)"foo");
 
 if (args.Contains("--dot"))
 {

@@ -12,7 +12,7 @@ public class Node
 
     public string Label { get; }
 
-    public List<(string Name, Node? Value)> References { get; } = new();
+    public List<Reference> References { get; } = new();
 
     public Node(string label)
     {

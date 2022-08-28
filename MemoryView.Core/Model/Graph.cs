@@ -1,19 +1,21 @@
 ﻿using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace MemoryView.Core;
 
 public class Graph
 {
-    public List<Node?> Roots { get; } = new();
+    internal List<Reference> Roots { get; } = new();
 
     private Dictionary<object, Node> Cache { get; } = new(new ReferenceEqualityComparer());
 
-    public ICollection<Node> Nodes => Cache.Values;
+    internal ICollection<Node> Nodes => Cache.Values;
 
-    public Graph Add(object root)
+    public Graph Add(object root, [CallerArgumentExpression("root")] string? name = null)
     {
-        Roots.Add(GetOrCreate(root));
+        var value = GetOrCreate(root);
+        Roots.Add(new(name ?? value?.Label ?? "<unnamed>", value));
         return this;
     }
 
@@ -78,7 +80,7 @@ public class Graph
         var fields = type.GetFields(flags);
         foreach (var field in fields)
         {
-            data.References.Add((field.Name, GetOrCreate(field.GetValue(source))));
+            data.References.Add(new(field.Name, GetOrCreate(field.GetValue(source))));
         }
     }
 }
