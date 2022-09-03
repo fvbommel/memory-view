@@ -39,7 +39,7 @@ public class BaseClass
 
     public readonly int BaseField = 123;
 
-    public override string ToString()
+    public virtual string GetString()
     {
         return _privateString;
     }
@@ -47,7 +47,7 @@ public class BaseClass
 
 public class TestClass : BaseClass
 {
-    private string _privateString = "hunter2";
+    private string _privateString = "hunter\n2";
 
     public Tuple<string, int?> Tuple { get; } = System.Tuple.Create("foo", (int?)5);
 
@@ -55,5 +55,5 @@ public class TestClass : BaseClass
 
     public TestClass? Next { get; set; }
 
-    public override string ToString() => $"{_privateString}, {Tuple}";
+    public override string GetString() => $"{_privateString}, {Tuple}";
 }
