@@ -140,8 +140,23 @@ public static class GraphViz
         }
     }
 
-    private static string HtmlEsc(string s) => WebUtility.HtmlEncode(s);
+    private static string HtmlEsc(string s) => WebUtility.HtmlEncode(s).Replace("\n", "<br/>");
 
     private static string StringEsc(string s)
-        => '"' + s.Replace("\\", "\\\\").Replace("\"", "\\\"") + '"';
+    {
+        var sb = new StringBuilder();
+        sb.Append('_'); // Reserve space for quote character, but don't let it be escaped below.
+        sb.Append(s);
+
+        // Escape special characters.
+        sb.Replace("\\", "\\\\"); // Escape existing backslashes.
+        sb.Replace("\"", "\\\""); // Add backslashes before quotes.
+        sb.Replace("\n", "\\n"); // Escape newlines.
+
+        // Surround with quotes.
+        sb[0] = '"';
+        sb.Append('"');
+
+        return sb.ToString();
+    }
 }
