@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -112,6 +112,12 @@ public class MemoryGraph
             else
             {
                 label = type.GetDisplayName();
+
+                // If it overrides ToString(), include that in the output.
+                if (type.GetMethod("ToString")?.DeclaringType != typeof(object))
+                {
+                    label = $"{label}\n{obj.ToString()}";
+                }
             }
             result = new Node(label, type);
 
