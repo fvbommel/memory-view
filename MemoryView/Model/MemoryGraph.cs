@@ -114,7 +114,8 @@ public class MemoryGraph
                 label = type.GetDisplayName();
 
                 // If it overrides ToString(), include that in the output.
-                if (type.GetMethod("ToString")?.DeclaringType != typeof(object))
+                MethodInfo? toStringMethod = type.GetMethod("ToString", BindingFlags.Public | BindingFlags.Instance, Type.EmptyTypes);
+                if (toStringMethod?.DeclaringType != typeof(object))
                 {
                     label = $"{label}\n{obj.ToString()}";
                 }
