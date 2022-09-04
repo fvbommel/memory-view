@@ -122,7 +122,7 @@ public static class GraphViz
         }
         else if (f.DeclaredType.IsPrimitive)
         {
-            return $"<tr><td>{name}</td><td>{f.DeclaredType.GetDisplayName()}</td><td>{v.Label}</td></tr>";
+            return $"<tr><td>{name}</td><td>{f.DeclaredType.GetDisplayName()}</td><td>{HtmlEsc(v.Label)}</td></tr>";
         }
         else if (f.DeclaredType.IsValueType)
         {
@@ -140,10 +140,22 @@ public static class GraphViz
         }
     }
 
-    private static string HtmlEsc(string s) => WebUtility.HtmlEncode(s).Replace("\n", "<br/>");
+    private static string HtmlEsc(string s)
+    {
+        // Escape special Unicode characters.
+        s = EscapeUnicode(s);
+
+        // Escape special HTML characters.
+        s = WebUtility.HtmlEncode(s);
+
+        // Convert newlines to <br/>.
+        return s.Replace("\n", "<br/>");
+    }
 
     private static string StringEsc(string s)
     {
+        s = EscapeUnicode(s);
+
         var sb = new StringBuilder();
         sb.Append('_'); // Reserve space for quote character, but don't let it be escaped below.
         sb.Append(s);
@@ -158,5 +170,58 @@ public static class GraphViz
         sb.Append('"');
 
         return sb.ToString();
+    }
+
+    private static string EscapeUnicode(string s)
+    {
+        // Escape special Unicode characters.
+        StringBuilder? sb = null;
+        int start = 0;
+        for (int i = 0; i < s.Length; i++)
+        {
+            var c = s[i];
+            if (c != '\\')
+            {
+                if (c == '\n'
+                    || (char.IsAscii(c) && !char.IsControl(c))
+                    || char.IsLetterOrDigit(c)
+                    || char.IsSymbol(c)
+                    || char.IsPunctuation(c)
+                    || char.IsSeparator(c))
+                {
+                    continue;
+                }
+            }
+
+            sb ??= new();
+            if (i > start)
+            {
+                sb.Append(s, start, i - start);
+            }
+            if (c == '\\')
+            {
+                sb.Append(@"\\");
+            }
+            else if ((int)c <= 0xFF)
+            {
+                sb.Append($@"\\x{(int)c:x2}");
+            }
+            else if ((int)c <= 0xFFFF)
+            {
+                sb.Append($@"\\u{(int)c:x4}");
+            }
+            else
+            {
+                sb.Append($@"\\U{(int)c:x8}");
+            }
+            start = i + 1;
+        }
+        if (sb is not null)
+        {
+            sb.Append(s, start, s.Length - start);
+            s = sb.ToString();
+        }
+
+        return s;
     }
 }
