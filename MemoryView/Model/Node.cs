@@ -40,7 +40,7 @@ public class Node
     internal void Print(StringBuilder sb)
     {
         // Header.
-        if (Type.IsPrimitive || Type.IsEnum)
+        if (Type.IsPrimitive || Type.IsEnum || Type.IsPointer)
         {
             sb.AppendLine($"#{ID}: {Type.GetDisplayName()} = {Label}");
         }

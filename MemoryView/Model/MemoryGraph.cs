@@ -32,7 +32,7 @@ public class MemoryGraph
             {
                 sb.AppendLine($"{root.Name} = <null>");
             }
-            else if (root.DeclaredType.IsPrimitive || root.DeclaredType.IsEnum)
+            else if (root.DeclaredType.IsPrimitive || root.DeclaredType.IsEnum || root.DeclaredType.IsPointer)
             {
                 sb.AppendLine($"{root.Name} : {root.DeclaredType.GetDisplayName()} = {root.Value.Label}");
                 root.Value.PrintFields(sb, 1);
@@ -94,6 +94,19 @@ public class MemoryGraph
             {
                 label = obj.ToString() ?? string.Empty;
             }
+            else if (type == typeof(System.Reflection.Pointer))
+            {
+                // Pointers are not returned directly, but are instead wrapped in System.Reflection.Pointer.
+                // Since this is not a value type, but has a pointer field that is reflected as another
+                // clone of itself, this would lead to an infinite linked list of pointers if not handled
+                // explicitly.
+                var t = typeof(System.Reflection.Pointer);
+                var flags = BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic;
+                var ptrType = t.GetMethod("GetPointerType", flags)!.CreateDelegate<Func<Type>>(obj)();
+                var ptrVal = t.GetMethod("GetPointerValue", flags)!.CreateDelegate<Func<IntPtr>>(obj)();
+                label = ptrVal.ToString("x8");
+                type = ptrType; // Replace System.Reflection.Pointer type with the underlying pointer type.
+            }
             else if (obj is string contents)
             {
                 var escaped = contents.Replace("\\", "\\\\").Replace("\"", @"\""");
@@ -125,10 +138,10 @@ public class MemoryGraph
             // Ensure future lookups (including recursive ones in AddFields) will find this object.
             NodeMap[obj] = result;
 
-            if (!type.IsPrimitive && !type.IsEnum && type != typeof(string))
+            if (!type.IsPrimitive && !type.IsEnum && !type.IsPointer && type != typeof(string))
             {
                 // Fill in details.
-                AddFields(result, type, obj);
+                AddFields(result, obj);
             }
         }
 
@@ -136,12 +149,17 @@ public class MemoryGraph
         {
             result.IsBoxed = true;
         }
+        if (result.Type.IsPointer && !declaredType.IsPointer)
+        {
+            result.IsBoxed = true;
+        }
 
         return result;
     }
 
-    private void AddFields(Node data, Type type, object source)
+    private void AddFields(Node data, object source, Type? type = null)
     {
+        type ??= source.GetType();
         if (type.IsArray)
         {
             var arr = (Array)source;
@@ -174,7 +192,7 @@ public class MemoryGraph
         // Add base fields first.
         if (type.BaseType is not null)
         {
-            AddFields(data, type.BaseType, source);
+            AddFields(data, source, type.BaseType);
         }
 
         var flags = BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic;

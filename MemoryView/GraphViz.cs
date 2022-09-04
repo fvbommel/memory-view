@@ -52,7 +52,7 @@ public static class GraphViz
         w.WriteLine();
         foreach (var node in nodes)
         {
-            if (node is { Type.IsValueType: false })
+            if (node is { Type: { IsValueType: false, IsPointer: false } })
             {
                 if (node.Type == typeof(string))
                 {
@@ -68,7 +68,7 @@ public static class GraphViz
             {
                 w.WriteLine($"    {node.ID} [label=<");
                 w.WriteLine("      <table cellborder=\"0\" rows=\"*\" columns=\"*\">");
-                if (node.Type.IsPrimitive || node.Type.IsEnum)
+                if (node.Type.IsPrimitive || node.Type.IsEnum || node.Type.IsPointer)
                 {
                     w.WriteLine($"        <tr><td><b>Box</b></td><td><b>{HtmlEsc(node.Type.GetDisplayName())}</b></td><td>{HtmlEsc(node.Label)}</td></tr>");
                 }
@@ -120,7 +120,7 @@ public static class GraphViz
             }
             return $"<tr><td>{name}</td><td>{HtmlEsc(f.DeclaredType.GetDisplayName())}</td><td><i>null</i></td></tr>";
         }
-        else if (f.DeclaredType.IsPrimitive || f.DeclaredType.IsEnum)
+        else if (f.DeclaredType.IsPrimitive || f.DeclaredType.IsEnum || f.DeclaredType.IsPointer)
         {
             var label = v.Label;
             if (f.DeclaredType.IsEnum)

@@ -24,6 +24,7 @@ internal static class TypeExtensions
         // Is this a well-known type?
         if (type == typeof(object)) { return "object"; }
         if (type == typeof(string)) { return "string"; }
+        if (type == typeof(void)) { return "void"; }
         if (type.IsPrimitive)
         {
             if (type == typeof(bool)) { return "bool"; }
@@ -48,7 +49,7 @@ internal static class TypeExtensions
 
     private static void PrintDisplayName(StringBuilder sb, Type type)
     {
-        if (type.IsPrimitive || type == typeof(object) || type == typeof(string))
+        if (type.IsPrimitive || type == typeof(object) || type == typeof(string) || type == typeof(void))
         {
             sb.Append(GetSimpleTypeName(type));
             return;
