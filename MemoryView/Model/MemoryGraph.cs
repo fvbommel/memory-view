@@ -32,7 +32,7 @@ public class MemoryGraph
             {
                 sb.AppendLine($"{root.Name} = <null>");
             }
-            else if (root.DeclaredType.IsPrimitive)
+            else if (root.DeclaredType.IsPrimitive || root.DeclaredType.IsEnum)
             {
                 sb.AppendLine($"{root.Name} : {root.DeclaredType.GetDisplayName()} = {root.Value.Label}");
                 root.Value.PrintFields(sb, 1);
@@ -90,7 +90,7 @@ public class MemoryGraph
 
             // Create uninitialized object.
             string label;
-            if (type.IsPrimitive)
+            if (type.IsPrimitive || type.IsEnum)
             {
                 label = obj.ToString() ?? string.Empty;
             }
@@ -125,7 +125,7 @@ public class MemoryGraph
             // Ensure future lookups (including recursive ones in AddFields) will find this object.
             NodeMap[obj] = result;
 
-            if (!type.IsPrimitive && type != typeof(string))
+            if (!type.IsPrimitive && !type.IsEnum && type != typeof(string))
             {
                 // Fill in details.
                 AddFields(result, type, obj);

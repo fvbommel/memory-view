@@ -68,7 +68,7 @@ public static class GraphViz
             {
                 w.WriteLine($"    {node.ID} [label=<");
                 w.WriteLine("      <table cellborder=\"0\" rows=\"*\" columns=\"*\">");
-                if (node.Type.IsPrimitive)
+                if (node.Type.IsPrimitive || node.Type.IsEnum)
                 {
                     w.WriteLine($"        <tr><td><b>Box</b></td><td><b>{HtmlEsc(node.Type.GetDisplayName())}</b></td><td>{HtmlEsc(node.Label)}</td></tr>");
                 }
@@ -120,9 +120,15 @@ public static class GraphViz
             }
             return $"<tr><td>{name}</td><td>{HtmlEsc(f.DeclaredType.GetDisplayName())}</td><td><i>null</i></td></tr>";
         }
-        else if (f.DeclaredType.IsPrimitive)
+        else if (f.DeclaredType.IsPrimitive || f.DeclaredType.IsEnum)
         {
-            return $"<tr><td>{name}</td><td>{f.DeclaredType.GetDisplayName()}</td><td>{HtmlEsc(v.Label)}</td></tr>";
+            var label = v.Label;
+            if (f.DeclaredType.IsEnum)
+            {
+                // Flag enums are "Value1, Value2".
+                label = label.Replace(' ', '\n');
+            }
+            return $"<tr><td>{name}</td><td>{f.DeclaredType.GetDisplayName()}</td><td>{HtmlEsc(label)}</td></tr>";
         }
         else if (f.DeclaredType.IsValueType)
         {

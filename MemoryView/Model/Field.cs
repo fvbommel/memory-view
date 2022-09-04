@@ -27,7 +27,7 @@ public record struct Field(string Name, Type DeclaredType, Node? Value)
         {
             sb.AppendLine(" = <null>");
         }
-        else if (DeclaredType.IsPrimitive)
+        else if (DeclaredType.IsPrimitive || DeclaredType.IsEnum)
         {
             sb.AppendLine($" = {Value.Label}");
         }
